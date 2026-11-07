@@ -1,6 +1,6 @@
 {
-  "name": "PienoSmart Italia",
-  "short_name": "PienoSmart",
+  "name": "PienoSprint Italia",
+  "short_name": "PienoSprint",
   "description": "Prezzi carburante, risparmio e diario rifornimenti",
   "start_url": "./index.html",
   "scope": "./",
