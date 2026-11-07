@@ -1,28 +1,23 @@
 # Verification — 2026-11-07
 
-Continued from the user-supplied v3 ZIP. No demonstration station prices are included.
+The CSV host timed out locally and in two GitHub runs. The independent official Osservaprezzi API returned HTTP 200 and real prices.
 
-## GitHub
+## Successful local import
 
-Source uploaded to https://github.com/kotetsi/pienosmart-italia (public repository created by its owner). The daily workflow is configured at 09:25 UTC, with manual and importer-change triggers. Scheduled execution and successful ingestion are not yet verified.
+- 21,664 distinct stations; 92,806 valid fuel/service prices.
+- All 20 regions queried sequentially. Returned records do not certify exhaustive national coverage.
+- 11 invalid prices rejected; 10 stations without valid coordinates remain searchable but cannot appear on the map.
+- 51,218 self-service and 41,588 attended records.
+- Download completed 2026-11-07T11:34:23Z.
+- An earlier independent Rome query provided 3,474 overlapping prices: 3,473 matched exactly. One changed between requests. The source is mutable and the import is not an atomic national snapshot.
+- Individual price dates are not supplied. Station timestamps and download time are distinguished.
 
-## Actual import attempts
+## Checks passed
 
-- Run 42367937934: the official MIMIT landing page timed out after approximately 45 seconds.
-- Run 42368080519: the official station CSV endpoint timed out after approximately 45 seconds; fallback to the landing page also timed out.
-- Both jobs failed before publishing a snapshot. No data/latest.json was generated or committed.
-- Logs: https://github.com/kotetsi/pienosmart-italia/actions/runs/42368080519
+Python compilation, JavaScript syntax, station referential integrity, distinct station IDs, price bounds, service modes, 20-region provenance, quoted CSV fields/date parsing and empty dataset rejection.
 
-The download blocker persists on both the local machine and GitHub's hosted runner. A working network path to MIMIT or locally downloaded official CSV files is required. Third-party or demo prices have not been substituted.
+Application logic was tested against the real snapshot: counts, Rome address search, date labels, Metano units, sorting after geolocation and trip calculation. This is a DOM-stub test, not visual browser verification.
 
-## Validation
+Earlier browser inspection verified layout and calculator without data. Current populated map, physical mobile devices, hosted deployment and cloud ingestion remain unverified in this report. Daily workflow is being switched to the API.
 
-JavaScript syntax and Python compilation passed locally. CSV parsing checks covered pipe delimiters, a quoted delimiter, extraction-date parsing, and rejection of empty datasets. Browser inspection verified the unavailable-feed state and the trip calculator page; populated search and map, physical mobile devices, and successful daily updates remain unverified.
-
-## Behavior
-
-Sorting after geolocation, Metano price units, snapshot-age notices, and calculator-example labels were improved. The importer rejects missing, future, stale or mismatched extraction dates and small datasets. Successful downloads record source URLs and SHA-256 hashes; failures preserve the previous snapshot.
-
-## Deployment
-
-The source repository is available, but the website has not been deployed. No domain was purchased. README v3 status sections describe the original package and should be read alongside this newer verification report.
+No demonstration station prices are included. No domain was purchased.

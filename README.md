@@ -1,35 +1,26 @@
-# PienoSmart Italia — MVP
+# PienoSmart Italia
 
-Static Italian-language website with MIMIT station-level CSV import, search, map (Leaflet / OpenStreetMap, internet required), detour-savings calculator, trip-cost calculator, fuel log (localStorage), and distribution histogram.
+Italian fuel-price comparison PWA, continued from the supplied v3 package.
 
-## Run
+## Verified real import — 7 November 2026
 
-Open `index.html` or run `python -m http.server 8000` in this folder and visit `http://localhost:8000`.
+The official CSV host timed out locally and in GitHub Actions. The separate public API used by the official Osservaprezzi website works:
 
-## Real data
+- Source: https://carburanti.mise.gov.it/ospzSearch/home
+- Registry: GET https://carburanti.mise.gov.it/ospzApi/registry/region
+- Prices: POST https://carburanti.mise.gov.it/ospzApi/search/area
+- First local import: 21,664 stations, 92,806 prices, all 20 regions queried. 11 invalid prices rejected; 10 stations lacked usable map coordinates.
 
-Official source: https://www.mimit.gov.it/it/open-data/elenco-dataset/carburanti-prezzi-praticati-e-anagrafica-degli-impianti
+These are prices returned by the ministry service, not generated examples. Queries do not independently certify exhaustive national coverage. The API insertDate describes a station update, not an individual fuel-price timestamp. The website displays download time separately. Actual pump prices can differ.
 
-Download **anagrafica_impianti_attivi.csv** and **prezzo_alle_8.csv**, then import both using the website. Data is processed in-browser and is not sent to our server. The 2026 format uses pipe delimiters and two header lines. The prices published each day represent values in force at 08:00 on the preceding day, **not live pump prices**. The interface never invents station prices.
+## Updates and local use
 
-Data attribution: Ministero delle Imprese e del Made in Italy (MIMIT), Osservaprezzi Carburanti; Italian Open Data License 2.0. Mapping © OpenStreetMap contributors.
+Run `python scripts/update_api_feed.py` to fetch regions sequentially and atomically replace data/latest.json only on success. Request hashes, fetch times, regional counts and exclusions are retained. The GitHub workflow runs at 09:25 UTC, on importer changes and manually. Hosted execution must be checked separately from a local run.
 
-## Production requirements
+Production pages fetch the published snapshot from this public GitHub repository. Localhost uses data/latest.json. Failed imports preserve the previous snapshot. The site flags downloads over 48 hours old; a fresh download does not guarantee every operator recently updated its prices.
 
-- Server-side daily fetch and validated import, caching, database/API, scheduled updates and monitoring. Browser cannot reliably auto-download MIMIT files due to cross-origin restrictions.
-- Production routing, toll APIs, historical ingestion, EV pricing, hotels/affiliate features, account sync and notification alerts are **not implemented**.
-- Review hosting, privacy/cookie policy, terms and security before public launch.
-- The current design is an MVP; it is not deployed and no domain is needed yet.
+The original scripts/update_feed.py and manual CSV import remain alternatives. Uploaded file origins are not independently certified.
 
-## Automated feed (v2)
+For local preview run `python -m http.server 8000` and open http://localhost:8000. Maps require internet; PWA installation requires localhost or HTTPS. Favorites and fuel logs stay in browser storage. Trip and detour calculators use user inputs with labeled examples. Routing, history, notifications and account sync are not implemented.
 
-Run `python scripts/update_feed.py` on a network-enabled server to discover and download both official CSV files from the MIMIT landing page, validate them and atomically publish `data/latest.json`. The website automatically loads this snapshot on startup, with manual import as fallback. The included `.github/workflows/update-data.yml` runs daily at 09:25 UTC and commits only validated snapshots; repository Actions write permissions must be enabled. To test the importer with local official CSV files: `MIMIT_STATIONS_FILE=/path/anagrafica.csv MIMIT_PRICES_FILE=/path/prezzi.csv python scripts/update_feed.py`.
-
-**Status:** The importer passed a synthetic 1,001-station integration test. Live download has NOT been verified in this execution environment because outbound DNS is unavailable. No live prices or sample prices are included. Scheduled updates start only after the project is hosted in a GitHub repository with Actions enabled. The official source may change link structure, requiring a small update to discovery logic.
-
-## v3: mobile / PWA and driver tools
-- Installable PWA with manifest, icons, service worker and mobile bottom navigation. Requires HTTPS or localhost; opening index.html as file does not install PWA.
-- Star/favorite stations stored locally, filter by favorites.
-- Fuel-log estimated consumption between consecutive full-tank refills, assuming each refill is a complete fill-up; do not interpret partial fills as measured consumption.
-- The offline service worker caches the app shell, **not** official fuel prices. No offline price guarantee.
-- Not yet deployed; no real feed verified, routing and push notifications still not implemented.
+Source: Ministero delle Imprese e del Made in Italy — Osservaprezzi Carburanti. Mapping: OpenStreetMap contributors. No domain purchase is required.
