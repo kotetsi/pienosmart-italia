@@ -19,6 +19,7 @@ class Links(HTMLParser):
             self.links.append((' '.join(self.label).strip(),self.href));self.href=None
 
 def download(url):
+    print('Downloading '+url,flush=True)
     req=urllib.request.Request(url,headers={'User-Agent':'PienoSmart/1.0 (public open-data importer)'})
     with urllib.request.urlopen(req,timeout=45) as response:
         data=response.read(30_000_001)
@@ -74,9 +75,15 @@ def main():
     if station_path and price_path:
         station_raw=Path(station_path).read_bytes();price_raw=Path(price_path).read_bytes();urls={'stations':'local','prices':'local'}
     else:
-        urls=find_urls(download(SOURCE).decode('utf-8','replace'))
-        if set(urls)!={'stations','prices'}:raise RuntimeError('Could not discover both official CSV links; no update published')
-        station_raw=download(urls['stations']);price_raw=download(urls['prices'])
+        # Public official export endpoints: do not depend on the CMS landing page.
+        urls={'stations':'https://www.mimit.gov.it/images/exportCSV/anagrafica_impianti_attivi.csv','prices':'https://www.mimit.gov.it/images/exportCSV/prezzo_alle_8.csv'}
+        try:
+            station_raw=download(urls['stations']);price_raw=download(urls['prices'])
+        except Exception as direct_error:
+            print('Direct export failed: '+str(direct_error),flush=True)
+            urls=find_urls(download(SOURCE).decode('utf-8','replace'))
+            if set(urls)!={'stations','prices'}:raise RuntimeError('Could not discover both official CSV links; no update published')
+            station_raw=download(urls['stations']);price_raw=download(urls['prices'])
     date_a,stations=parse(station_raw);date_p,prices=parse(price_raw)
     stations,prices=convert(stations,prices)
     if date_a and date_p and date_a!=date_p:raise ValueError('Station and price extraction dates differ')
@@ -94,3 +101,4 @@ def main():
 if __name__=='__main__':
     try:main()
     except Exception as exc:print('UPDATE FAILED:',exc,file=sys.stderr);sys.exit(1)
+
